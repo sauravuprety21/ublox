@@ -59,7 +59,11 @@ class RawDataProduct final : public virtual ComponentInterface {
   std::vector<std::shared_ptr<UbloxTopicDiagnostic> > freq_diagnostics_;
 
   rclcpp::Publisher<ublox_msgs::msg::RxmRAW>::SharedPtr rxm_raw_pub_;
+  rclcpp::Publisher<ublox_msgs::msg::RxmRAWX>::SharedPtr rxm_rawx_pub_;
+
   rclcpp::Publisher<ublox_msgs::msg::RxmSFRB>::SharedPtr rxm_sfrb_pub_;
+  rclcpp::Publisher<ublox_msgs::msg::RxmSFRBX>::SharedPtr rxm_sfrbx_pub_;
+  
   rclcpp::Publisher<ublox_msgs::msg::RxmEPH>::SharedPtr rxm_eph_pub_;
   rclcpp::Publisher<ublox_msgs::msg::RxmALM>::SharedPtr rxm_alm_pub_;
 

@@ -23,8 +23,14 @@ RawDataProduct::RawDataProduct(uint16_t nav_rate, uint16_t meas_rate, std::share
   if (getRosBoolean(node_, "publish.rxm.raw")) {
     rxm_raw_pub_ = node_->create_publisher<ublox_msgs::msg::RxmRAW>("rxmraw", 1);
   }
+  if (getRosBoolean(node_, "publish.rxm.rawx")) {
+    rxm_rawx_pub_ = node_->create_publisher<ublox_msgs::msg::RxmRAWX>("rxmrawx", 1);
+  }
   if (getRosBoolean(node_, "publish.rxm.sfrb")) {
     rxm_sfrb_pub_ = node_->create_publisher<ublox_msgs::msg::RxmSFRB>("rxmsfrb", 1);
+  }
+  if (getRosBoolean(node_, "publish.rxm.sfrbx")) {
+    rxm_sfrbx_pub_ = node_->create_publisher<ublox_msgs::msg::RxmSFRBX>("rxmsfrbx", 1);
   }
   if (getRosBoolean(node_, "publish.rxm.eph")) {
     rxm_eph_pub_ = node_->create_publisher<ublox_msgs::msg::RxmEPH>("rxmeph", 1);
@@ -40,10 +46,21 @@ void RawDataProduct::subscribe(std::shared_ptr<ublox_gps::Gps> gps) {
     gps->subscribe<ublox_msgs::msg::RxmRAW>([this](const ublox_msgs::msg::RxmRAW &m) { rxm_raw_pub_->publish(m); },
                                        1);
   }
+  
+  if (getRosBoolean(node_, "publish.rxm.rawx")) {
+    gps->subscribe<ublox_msgs::msg::RxmRAWX>([this](const ublox_msgs::msg::RxmRAWX &m) { rxm_rawx_pub_->publish(m); },
+                                       1);
+  }
 
   // Subscribe to RXM SFRB
   if (getRosBoolean(node_, "publish.rxm.sfrb")) {
     gps->subscribe<ublox_msgs::msg::RxmSFRB>([this](const ublox_msgs::msg::RxmSFRB &m) { rxm_sfrb_pub_->publish(m); },
+                                        1);
+  }
+
+  // Subscribe to RXM SFRBX
+  if (getRosBoolean(node_, "publish.rxm.sfrbx")) {
+    gps->subscribe<ublox_msgs::msg::RxmSFRBX>([this](const ublox_msgs::msg::RxmSFRBX &m) { rxm_sfrbx_pub_->publish(m); },
                                         1);
   }
 

@@ -431,7 +431,9 @@ void UbloxNode::getRosParams() {
   this->declare_parameter("publish.rxm.eph", getRosBoolean(this, "publish.rxm.all"));
   this->declare_parameter("publish.rxm.rtcm", getRosBoolean(this, "publish.rxm.all"));
   this->declare_parameter("publish.rxm.raw", getRosBoolean(this, "publish.rxm.all"));
+  this->declare_parameter("publish.rxm.rawx", getRosBoolean(this, "publish.rxm.all"));
   this->declare_parameter("publish.rxm.sfrb", getRosBoolean(this, "publish.rxm.all"));
+  this->declare_parameter("publish.rxm.sfrbx", getRosBoolean(this, "publish.rxm.all"));
 
   this->declare_parameter("publish.aid.all", getRosBoolean(this, "publish.all"));
   this->declare_parameter("publish.aid.alm", getRosBoolean(this, "publish.aid.all"));
