@@ -1,0 +1,38 @@
+# Configuration Settings for F9P device
+ublox_gps_node:
+  ros__parameters:
+    debug: 0                    # Range 0-4 (0 means no debug statements will print)
+    # sudo nano /etc/udev/rules.d/99-zed-f9p.rules
+    # SUBSYSTEM=="tty", ATTRS{idVendor}=="1546", ATTRS{idProduct}=="0502", ATTRS{serial}=="DBT5KOYS", SYMLINK+="zed_f9p"
+    # sudo udevadm control --reload-rules
+    # sudo udevadm trigger
+    device: /dev/zed_f9p
+    uart1:
+      baudrate: 460800
+    frame_id: ubx_f9p
+
+    config_on_startup: false
+    raw_data: true  
+
+    raw_data_stream:
+      enable: true
+    
+    inf:
+      all: true                   # Whether to display all INF messages in console
+    publish:
+      all: true
+      aid:
+        alm: false
+        hui: false
+        eph: false
+      nav:
+        posecef: false
+      rxm:
+        almRaw: false
+        eph: false
+        raw: false
+        sfrb: false
+      nmea: false
+
+    dgnss_mode: 3
+    
