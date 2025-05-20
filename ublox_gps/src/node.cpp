@@ -897,11 +897,11 @@ void UbloxNode::initialize() {
   initializeIo();
   // Must process Mon VER before setting firmware/hardware params
   processMonVer();
-  if (protocol_version_ <= 14.0) {
+  // if (protocol_version_ <= 14.0) {
     if (getRosBoolean(this, "raw_data")) {
       components_.push_back(std::make_shared<RawDataProduct>(nav_rate_, meas_rate_, updater_, this));
     }
-  }
+  // }
   // Must set firmware & hardware params before initializing diagnostics
   for (const std::shared_ptr<ComponentInterface> & component : components_) {
     component->getRosParams();
