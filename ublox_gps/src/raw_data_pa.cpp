@@ -55,7 +55,7 @@
 namespace ublox_node {
 
 RawDataStreamPa::RawDataStreamPa(bool is_ros_subscriber) : rclcpp::Node("raw_data_pa"),
-  flag_publish_(false),
+  flag_publish_(true),
   is_ros_subscriber_(is_ros_subscriber) {
 
   raw_pub_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>("raw_data_stream", 100);
