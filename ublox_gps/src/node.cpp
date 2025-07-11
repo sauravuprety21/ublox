@@ -57,6 +57,8 @@
 #include <ublox_msgs/msg/nav_status.hpp>
 
 #include <nmea_msgs/msg/sentence.hpp>
+#include "mavros_msgs/msg/rtcm.hpp"
+
 
 #include <ublox_gps/adr_udr_product.hpp>
 #include <ublox_gps/fix_diagnostic.hpp>
@@ -193,8 +195,8 @@ UbloxNode::UbloxNode(const rclcpp::NodeOptions & options) : rclcpp::Node("ublox_
   initialize();
 }
 
-void UbloxNode::rtcmCallback(const rtcm_msgs::msg::Message::SharedPtr msg) {
-  gps_->sendRtcm(msg->message);
+void UbloxNode::rtcmCallback(const mavros_msgs::msg::RTCM::SharedPtr msg) {
+  gps_->sendRtcm(msg->data);
 }
 
 void UbloxNode::addFirmwareInterface() {
@@ -501,7 +503,7 @@ void UbloxNode::getRosParams() {
   }
 
   // Create subscriber for RTCM correction data to enable RTK
-  this->subscription_ = this->create_subscription<rtcm_msgs::msg::Message>("/rtcm", 10, std::bind(&UbloxNode::rtcmCallback, this, std::placeholders::_1));
+  this->subscription_ = this->create_subscription<mavros_msgs::msg::RTCM>("/rtcm", 10, std::bind(&UbloxNode::rtcmCallback, this, std::placeholders::_1));
 }
 
 void UbloxNode::keepAlive() {
