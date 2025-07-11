@@ -58,7 +58,7 @@ RawDataStreamPa::RawDataStreamPa(bool is_ros_subscriber) : rclcpp::Node("raw_dat
   flag_publish_(true),
   is_ros_subscriber_(is_ros_subscriber) {
 
-  raw_pub_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>("raw_data_stream", 100);
+  raw_pub_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>("~/raw_data_stream", 100);
 
   this->declare_parameter("dir", "");
   this->declare_parameter("raw_data_stream.dir", "");
