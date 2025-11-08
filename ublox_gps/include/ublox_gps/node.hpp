@@ -52,6 +52,9 @@
 #include <ublox_gps/rtcm.hpp>
 #include <ublox_gps/raw_data_pa.hpp>
 
+#include <std_msgs/msg/u_int8_multi_array.hpp>
+#include <std_msgs/msg/multi_array_dimension.hpp>
+
 // This file also declares UbloxNode which is the main class and ros node. It
 // implements functionality which applies to any u-blox device, regardless of
 // the firmware version or product type.  The class is designed in compositional
@@ -64,244 +67,246 @@
  * This namespace is for the ROS u-blox node and handles anything regarding
  * ROS parameters, message passing, diagnostics, etc.
  */
-namespace ublox_node {
-
-/**
- * @brief This class represents u-blox ROS node for *all* firmware and product
- * versions.
- *
- * @details It loads the user parameters, configures the u-blox
- * device, subscribes to u-blox messages, and configures the device hardware.
- * Functionality specific to a given product or firmware version, etc. should
- * NOT be implemented in this class. Instead, the user should add the
- * functionality to the appropriate implementation of ComponentInterface.
- * If necessary, the user should create a class which implements u-blox
- * interface, then add a pointer to an instance of the class to the
- * components vector.
- * The UbloxNode calls the public methods of ComponentInterface for each
- * element in the components vector.
- */
-class UbloxNode final : public rclcpp::Node {
- public:
-  //! How long to wait during I/O reset [s]
-  constexpr static int kResetWait = 10;
-  //! How often (in seconds) to send keep-alive message
-  constexpr static double kKeepAlivePeriod = 10.0;
-  //! How often (in seconds) to call poll messages
-  constexpr static double kPollDuration = 1.0;
-  // Constants used for diagnostic frequency updater
-  //! [s] 5Hz diagnostic period
-  const float kDiagnosticPeriod = 0.2;
-  //! Tolerance for Fix topic frequency as percentage of target frequency
-  const double kFixFreqTol = 0.15;
-  //! Window [num messages] for Fix Frequency Diagnostic
-  const double kFixFreqWindow = 10;
-  //! Minimum Time Stamp Status for fix frequency diagnostic
-  const double kTimeStampStatusMin = 0;
+namespace ublox_node
+{
 
   /**
-   * @brief Initialize and run the u-blox node.
-   */
-  explicit UbloxNode(const rclcpp::NodeOptions & options);
-
-  ~UbloxNode() override;
-
-  UbloxNode(UbloxNode &&c) = delete;
-  UbloxNode &operator=(UbloxNode &&c) = delete;
-  UbloxNode(const UbloxNode &c) = delete;
-  UbloxNode &operator=(const UbloxNode &c) = delete;
-
-  /**
-   * @brief Get the node parameters from the ROS Parameter Server.
-   */
-  void getRosParams();
-
-  /**
-   * @brief Configure the device based on ROS parameters.
-   * @return true if configured successfully
-   */
-  bool configureUblox();
-
-  /**
-   * @brief Subscribe to all requested u-blox messages.
-   */
-  void subscribe();
-
-  /**
-   * @brief Initialize the diagnostic updater and add the fix diagnostic.
-   */
-  void initializeRosDiagnostics();
-
-  /**
-   * @brief Print an INF message to the ROS console.
-   */
-  void printInf(const ublox_msgs::msg::Inf &m, uint8_t id);
-
- private:
-
-  /**
-   * @brief Callback for '/ntrip_client/rtcm' subscription to handle RTCM correction data
-   */
-  void rtcmCallback(const mavros_msgs::msg::RTCM::SharedPtr msg);
-
-  /**
-   * @brief Subscription handler for RTCM data
-   */
-  rclcpp::Subscription<mavros_msgs::msg::RTCM>::SharedPtr subscription_;
-
-  /**
-   * @brief Initialize the I/O handling.
-   */
-  void initializeIo();
-
-  /**
-   * @brief Initialize the U-Blox node. Configure the U-Blox and subscribe to
-   * messages.
-   */
-  void initialize();
-
-  /**
-   * @brief Shutdown the node. Closes the serial port.
-   */
-  void shutdown();
-
-  /**
-   * @brief Send a reset message the u-blox device & re-initialize the I/O.
-   * @return true if reset was successful, false otherwise.
-   */
-  bool resetDevice();
-
-  /**
-   * @brief Process the MonVer message and add firmware and product components.
+   * @brief This class represents u-blox ROS node for *all* firmware and product
+   * versions.
    *
-   * @details Determines the protocol version, product type and supported GNSS.
+   * @details It loads the user parameters, configures the u-blox
+   * device, subscribes to u-blox messages, and configures the device hardware.
+   * Functionality specific to a given product or firmware version, etc. should
+   * NOT be implemented in this class. Instead, the user should add the
+   * functionality to the appropriate implementation of ComponentInterface.
+   * If necessary, the user should create a class which implements u-blox
+   * interface, then add a pointer to an instance of the class to the
+   * components vector.
+   * The UbloxNode calls the public methods of ComponentInterface for each
+   * element in the components vector.
    */
-  void processMonVer();
+  class UbloxNode final : public rclcpp::Node
+  {
+  public:
+    //! How long to wait during I/O reset [s]
+    constexpr static int kResetWait = 10;
+    //! How often (in seconds) to send keep-alive message
+    constexpr static double kKeepAlivePeriod = 10.0;
+    //! How often (in seconds) to call poll messages
+    constexpr static double kPollDuration = 1.0;
+    // Constants used for diagnostic frequency updater
+    //! [s] 5Hz diagnostic period
+    const float kDiagnosticPeriod = 0.2;
+    //! Tolerance for Fix topic frequency as percentage of target frequency
+    const double kFixFreqTol = 0.15;
+    //! Window [num messages] for Fix Frequency Diagnostic
+    const double kFixFreqWindow = 10;
+    //! Minimum Time Stamp Status for fix frequency diagnostic
+    const double kTimeStampStatusMin = 0;
 
-  /**
-   * @brief Add the interface for firmware specific configuration, subscribers,
-   * & diagnostics. This assumes the protocol_version_ has been set.
-   */
-  void addFirmwareInterface();
+    /**
+     * @brief Initialize and run the u-blox node.
+     */
+    explicit UbloxNode(const rclcpp::NodeOptions &options);
 
-  /**
-   * @brief Add the interface which is used for product category
-   * configuration, subscribers, & diagnostics.
-   * @param the product category, i.e. SPG, HPG, ADR, UDR, TIM, or FTS.
-   * @param for HPG/TIM products, this value is either REF or ROV, for other
-   * products this string is empty
-   */
-  void addProductInterface(const std::string & product_category,
-                           const std::string & ref_rov = "");
+    ~UbloxNode() override;
 
-  /**
-   * @brief Poll version message from the U-Blox device to keep socket active.
-   */
-  void keepAlive();
+    UbloxNode(UbloxNode &&c) = delete;
+    UbloxNode &operator=(UbloxNode &&c) = delete;
+    UbloxNode(const UbloxNode &c) = delete;
+    UbloxNode &operator=(const UbloxNode &c) = delete;
 
-  /**
-   * @brief Poll messages from the U-Blox device.
-   */
-  void pollMessages();
+    /**
+     * @brief Get the node parameters from the ROS Parameter Server.
+     */
+    void getRosParams();
 
-  /**
-   * @brief Configure INF messages, call after subscribe.
-   */
-  void configureInf();
+    /**
+     * @brief Configure the device based on ROS parameters.
+     * @return true if configured successfully
+     */
+    bool configureUblox();
 
-  //! The u-blox node components
-  /*!
-   * The node will call the functions in these interfaces for each object
-   * in the vector.
-   */
-  std::vector<std::shared_ptr<ComponentInterface> > components_;
+    /**
+     * @brief Subscribe to all requested u-blox messages.
+     */
+    void subscribe();
 
-  //! Determined From Mon VER
-  float protocol_version_ = 0.0;
-  // Variables set from parameter server
-  //! Device port
-  std::string device_;
-  //! dynamic model type
-  std::string dynamic_model_;
-  //! Fix mode type
-  std::string fix_mode_;
-  //! Set from dynamic model string
-  uint8_t dmodel_{0};
-  //! Set from fix mode string
-  uint8_t fmode_{0};
-  //! UART1 baudrate
-  uint32_t baudrate_{0};
-  //! UART in protocol (see CfgPRT message for constants)
-  uint16_t uart_in_{0};
-  //! UART out protocol (see CfgPRT message for constants)
-  uint16_t uart_out_{0};
-  //! USB TX Ready Pin configuration (see CfgPRT message for constants)
-  uint16_t usb_tx_{0};
-  //! Whether to configure the USB port
-  /*! Set to true if usb_in & usb_out parameters are set */
-  bool set_usb_{false};
-  //! USB in protocol (see CfgPRT message for constants)
-  uint16_t usb_in_{0};
-  //! USB out protocol (see CfgPRT message for constants)
-  uint16_t usb_out_{0};
-  //! The measurement rate in Hz
-  double rate_{0.0};
-  //! User-defined Datum
-  ublox_msgs::msg::CfgDAT cfg_dat_;
-  //! SBAS Usage parameter (see CfgSBAS message)
-  uint8_t sbas_usage_{0};
-  //! Max SBAS parameter (see CfgSBAS message)
-  uint8_t max_sbas_{0};
-  //! Dead reckoning limit parameter
-  uint8_t dr_limit_{0};
-  //! Parameters to load from non-volatile memory during configuration
-  ublox_msgs::msg::CfgCFG load_;
-  //! Parameters to save to non-volatile memory after configuration
-  ublox_msgs::msg::CfgCFG save_;
-  //! rate for TIM-TM2
-  uint8_t tim_rate_{0};
+    /**
+     * @brief Initialize the diagnostic updater and add the fix diagnostic.
+     */
+    void initializeRosDiagnostics();
 
-  //! raw data stream logging
-  std::shared_ptr<RawDataStreamPa> raw_data_stream_pa_;
+    /**
+     * @brief Print an INF message to the ROS console.
+     */
+    void printInf(const ublox_msgs::msg::Inf &m, uint8_t id);
 
-  rclcpp::Publisher<ublox_msgs::msg::NavSTATUS>::SharedPtr nav_status_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::NavPOSECEF>::SharedPtr nav_posecef_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::NavCLOCK>::SharedPtr nav_clock_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::NavCOV>::SharedPtr nav_cov_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::AidALM>::SharedPtr aid_alm_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::AidEPH>::SharedPtr aid_eph_pub_;
-  rclcpp::Publisher<ublox_msgs::msg::AidHUI>::SharedPtr aid_hui_pub_;
-  rclcpp::Publisher<nmea_msgs::msg::Sentence>::SharedPtr nmea_pub_;
+  private:
+    /**
+     * @brief Callback for '/ntrip_client/rtcm' subscription to handle RTCM correction data
+     */
+    void rtcmCallback(const mavros_msgs::msg::RTCM::SharedPtr msg);
 
-  void publish_nmea(const std::string & sentence, const std::string & topic);
+    /**
+     * @brief Subscription handler for RTCM data
+     */
+    rclcpp::Subscription<mavros_msgs::msg::RTCM>::SharedPtr subscription_;
 
-  //! Navigation rate in measurement cycles, see CfgRate.msg
-  uint16_t nav_rate_{0};
+    /**
+     * @brief Initialize the I/O handling.
+     */
+    void initializeIo();
 
-  //! The measurement [ms], see CfgRate.msg
-  uint16_t meas_rate_{0};
+    /**
+     * @brief Initialize the U-Blox node. Configure the U-Blox and subscribe to
+     * messages.
+     */
+    void initialize();
 
-  //! The ROS frame ID of this device
-  std::string frame_id_;
+    /**
+     * @brief Shutdown the node. Closes the serial port.
+     */
+    void shutdown();
 
-  //! ROS diagnostic updater
-  std::shared_ptr<diagnostic_updater::Updater> updater_;
+    /**
+     * @brief Send a reset message the u-blox device & re-initialize the I/O.
+     * @return true if reset was successful, false otherwise.
+     */
+    bool resetDevice();
 
-  //! fix frequency diagnostic updater
-  std::shared_ptr<FixDiagnostic> freq_diag_;
+    /**
+     * @brief Process the MonVer message and add firmware and product components.
+     *
+     * @details Determines the protocol version, product type and supported GNSS.
+     */
+    void processMonVer();
 
-  std::vector<ublox_gps::Rtcm> rtcms_;
+    /**
+     * @brief Add the interface for firmware specific configuration, subscribers,
+     * & diagnostics. This assumes the protocol_version_ has been set.
+     */
+    void addFirmwareInterface();
 
-  //! Which GNSS are supported by the device
-  std::shared_ptr<Gnss> gnss_;
+    /**
+     * @brief Add the interface which is used for product category
+     * configuration, subscribers, & diagnostics.
+     * @param the product category, i.e. SPG, HPG, ADR, UDR, TIM, or FTS.
+     * @param for HPG/TIM products, this value is either REF or ROV, for other
+     * products this string is empty
+     */
+    void addProductInterface(const std::string &product_category,
+                             const std::string &ref_rov = "");
 
-  //! Handles communication with the U-Blox Device
-  std::shared_ptr<ublox_gps::Gps> gps_;
+    /**
+     * @brief Poll version message from the U-Blox device to keep socket active.
+     */
+    void keepAlive();
 
-  rclcpp::TimerBase::SharedPtr keep_alive_;
-  rclcpp::TimerBase::SharedPtr poller_;
-};
+    /**
+     * @brief Poll messages from the U-Blox device.
+     */
+    void pollMessages();
 
-}  // namespace ublox_node
+    /**
+     * @brief Configure INF messages, call after subscribe.
+     */
+    void configureInf();
 
-#endif  // UBLOX_GPS_NODE_HPP
+    //! The u-blox node components
+    /*!
+     * The node will call the functions in these interfaces for each object
+     * in the vector.
+     */
+    std::vector<std::shared_ptr<ComponentInterface>> components_;
+
+    //! Determined From Mon VER
+    float protocol_version_ = 0.0;
+    // Variables set from parameter server
+    //! Device port
+    std::string device_;
+    //! dynamic model type
+    std::string dynamic_model_;
+    //! Fix mode type
+    std::string fix_mode_;
+    //! Set from dynamic model string
+    uint8_t dmodel_{0};
+    //! Set from fix mode string
+    uint8_t fmode_{0};
+    //! UART1 baudrate
+    uint32_t baudrate_{0};
+    //! UART in protocol (see CfgPRT message for constants)
+    uint16_t uart_in_{0};
+    //! UART out protocol (see CfgPRT message for constants)
+    uint16_t uart_out_{0};
+    //! USB TX Ready Pin configuration (see CfgPRT message for constants)
+    uint16_t usb_tx_{0};
+    //! Whether to configure the USB port
+    /*! Set to true if usb_in & usb_out parameters are set */
+    bool set_usb_{false};
+    //! USB in protocol (see CfgPRT message for constants)
+    uint16_t usb_in_{0};
+    //! USB out protocol (see CfgPRT message for constants)
+    uint16_t usb_out_{0};
+    //! The measurement rate in Hz
+    double rate_{0.0};
+    //! User-defined Datum
+    ublox_msgs::msg::CfgDAT cfg_dat_;
+    //! SBAS Usage parameter (see CfgSBAS message)
+    uint8_t sbas_usage_{0};
+    //! Max SBAS parameter (see CfgSBAS message)
+    uint8_t max_sbas_{0};
+    //! Dead reckoning limit parameter
+    uint8_t dr_limit_{0};
+    //! Parameters to load from non-volatile memory during configuration
+    ublox_msgs::msg::CfgCFG load_;
+    //! Parameters to save to non-volatile memory after configuration
+    ublox_msgs::msg::CfgCFG save_;
+    //! rate for TIM-TM2
+    uint8_t tim_rate_{0};
+
+    //! raw data stream logging
+    std::shared_ptr<RawDataStreamPa> raw_data_stream_pa_;
+
+    rclcpp::Publisher<ublox_msgs::msg::NavSTATUS>::SharedPtr nav_status_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::NavPOSECEF>::SharedPtr nav_posecef_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::NavCLOCK>::SharedPtr nav_clock_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::NavCOV>::SharedPtr nav_cov_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::AidALM>::SharedPtr aid_alm_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::AidEPH>::SharedPtr aid_eph_pub_;
+    rclcpp::Publisher<ublox_msgs::msg::AidHUI>::SharedPtr aid_hui_pub_;
+    rclcpp::Publisher<nmea_msgs::msg::Sentence>::SharedPtr nmea_pub_;
+    rclcpp::Publisher<std_msgs::msg::UInt8MultiArray>::SharedPtr raw_data_stream_pub_;
+
+    void publish_nmea(const std::string &sentence, const std::string &topic);
+
+    //! Navigation rate in measurement cycles, see CfgRate.msg
+    uint16_t nav_rate_{0};
+
+    //! The measurement [ms], see CfgRate.msg
+    uint16_t meas_rate_{0};
+
+    //! The ROS frame ID of this device
+    std::string frame_id_;
+
+    //! ROS diagnostic updater
+    std::shared_ptr<diagnostic_updater::Updater> updater_;
+
+    //! fix frequency diagnostic updater
+    std::shared_ptr<FixDiagnostic> freq_diag_;
+
+    std::vector<ublox_gps::Rtcm> rtcms_;
+
+    //! Which GNSS are supported by the device
+    std::shared_ptr<Gnss> gnss_;
+
+    //! Handles communication with the U-Blox Device
+    std::shared_ptr<ublox_gps::Gps> gps_;
+
+    rclcpp::TimerBase::SharedPtr keep_alive_;
+    rclcpp::TimerBase::SharedPtr poller_;
+  };
+
+} // namespace ublox_node
+
+#endif // UBLOX_GPS_NODE_HPP
